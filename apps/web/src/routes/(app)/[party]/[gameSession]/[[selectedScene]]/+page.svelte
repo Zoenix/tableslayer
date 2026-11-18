@@ -43,7 +43,7 @@
     unbindPropertyUpdates
   } from '#lib/utils/index.js';
   import { getPreference, setPreference, type PaneConfig } from '#lib/utils/gameSessionPreferences.js';
-  import { stagePerformance } from '#lib/stores/index.js';
+  import { cursorSharing, stagePerformance } from '#lib/stores/index.js';
   import { getLatestMeasurement } from '#lib/utils/measurements.js';
   import { throttle } from '#lib/utils/throttle.js';
   import {
@@ -1196,8 +1196,13 @@
   }, 33);
 
   const handleCursorMove = (worldPosition: { x: number; y: number; z: number }) => {
-    if (isOnActiveScene()) throttledCursorUpdate(worldPosition);
+    if (cursorSharing.enabled && isOnActiveScene()) throttledCursorUpdate(worldPosition);
   };
+
+  // Turning sharing off removes the cursor from the playfield immediately
+  $effect(() => {
+    if (!cursorSharing.enabled) untrack(() => session.presence?.clearCursor());
+  });
 
   const throttledZoomHandler = throttle((e: WheelEvent, props: StageProps) => {
     handleStageZoom(e, props);
@@ -1401,6 +1406,7 @@
 
   onMount(() => {
     stagePerformance.init();
+    cursorSharing.init();
 
     const unbindSleep = session.client ? sleep.bindClient(session.client) : null;
     document.addEventListener('visibilitychange', commitPendingGestureWrites);

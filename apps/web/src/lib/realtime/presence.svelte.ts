@@ -171,6 +171,10 @@ export class PresenceChannel {
     });
   }
 
+  clearCursor() {
+    this.#awareness.setLocalStateField('cursor', null);
+  }
+
   updateMeasurement(
     startPoint: { x: number; y: number } | null,
     endPoint: { x: number; y: number } | null,

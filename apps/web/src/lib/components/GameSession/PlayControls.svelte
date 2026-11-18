@@ -2,7 +2,7 @@
   import type { SelectParty, SelectScene } from '#lib/db/app/schema.js';
   import type { SessionDocClient } from '#lib/realtime/index.js';
   import type { Thumb } from '#lib/server/index.js';
-  import { stagePerformance, type StagePerformanceSetting } from '#lib/stores/index.js';
+  import { cursorSharing, stagePerformance, type StagePerformanceSetting } from '#lib/stores/index.js';
   import { trackChecklistItem } from '#lib/utils/index.js';
   import { debugState, setDebugEnabled } from '@tableslayer/stage';
   import { Button, FormControl, Hr, Link, RadioButton, Spacer, Text } from '@tableslayer/ui';
@@ -68,6 +68,24 @@
   </Button>
   <Spacer size="0.5rem" />
   <Text size="0.85rem" color="var(--fgMuted)">Displays your party's pause screen instead of a scene.</Text>
+  <Spacer />
+  <Hr />
+  <Spacer />
+  <FormControl label="Show my cursor to players" name="shareCursor">
+    {#snippet input({ inputProps })}
+      <RadioButton
+        {...inputProps}
+        selected={cursorSharing.enabled ? 'on' : 'off'}
+        options={[
+          { label: 'On', value: 'on' },
+          { label: 'Off', value: 'off' }
+        ]}
+        onSelectedChange={(value) => cursorSharing.setEnabled(value === 'on')}
+      />
+    {/snippet}
+  </FormControl>
+  <Spacer size="0.5rem" />
+  <Text size="0.85rem" color="var(--fgMuted)">Mirrors your mouse pointer onto the playfield.</Text>
   <Spacer />
   <Hr />
   <Spacer />

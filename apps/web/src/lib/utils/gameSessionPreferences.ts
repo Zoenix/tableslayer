@@ -21,6 +21,7 @@ export interface GameSessionPreferences {
   paneLayoutMobile?: PaneConfig[];
   stagePerformance?: 'auto' | 'high' | 'medium' | 'low';
   stagePerformanceResolved?: 'high' | 'medium' | 'low';
+  shareCursor?: boolean;
 }
 
 export interface PreferenceConfig<T> {
@@ -111,6 +112,11 @@ export const PREFERENCE_CONFIGS: Record<keyof GameSessionPreferences, Preference
     cookieName: 'tableslayer:stagePerformanceResolved',
     defaultValue: 'high',
     validate: (value): value is 'high' | 'medium' | 'low' => value === 'high' || value === 'medium' || value === 'low'
+  },
+  shareCursor: {
+    cookieName: 'tableslayer:shareCursor',
+    defaultValue: true, // ON by default: players see where the GM points
+    validate: (value): value is boolean => typeof value === 'boolean'
   }
 };
 
