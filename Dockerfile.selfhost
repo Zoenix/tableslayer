@@ -1,0 +1,48 @@
+# syntax=docker/dockerfile:1
+# Self-hosted Table Slayer image. One image, two roles (see docker-compose.selfhost.yml):
+#   web       node selfhost/server.js   (SvelteKit app, file storage, image resizing, ws proxy)
+#   realtime  sh selfhost/realtime.sh   (PartyServer worker in workerd with local Durable Objects)
+
+ARG NODE_VERSION=22
+FROM node:${NODE_VERSION}-bookworm-slim
+
+RUN apt-get update -qq \
+  && apt-get install -y --no-install-recommends python3 pkg-config build-essential ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV HUSKY=0 \
+    TURBO_TELEMETRY_DISABLED=1 \
+    COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+
+RUN corepack enable
+
+WORKDIR /app
+
+COPY . .
+RUN pnpm install --frozen-lockfile
+
+RUN NODE_OPTIONS="--max-old-space-size=4096" pnpm turbo run web#build
+
+# Pre-generate worker types so `wrangler dev` starts without extra work
+RUN cd apps/web && node_modules/.bin/wrangler types --config partyserver/wrangler.jsonc \
+      --path partyserver/worker-configuration.d.ts --strict-vars false >/dev/null 2>&1 || true
+
+ENV NODE_ENV=production \
+    ENV_NAME=production \
+    PORT=3000 \
+    BODY_SIZE_LIMIT=200M \
+    STORAGE_DRIVER=local \
+    TURSO_APP_DB_URL=file:/data/db/tableslayer.db \
+    LOCAL_STORAGE_PATH=/data/files \
+    REALTIME_DATA_PATH=/data/realtime \
+    REALTIME_INTERNAL_URL=http://realtime:1999 \
+    APP_API_URL=http://web:3000
+
+VOLUME ["/data"]
+WORKDIR /app/apps/web
+EXPOSE 3000 1999
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.HEALTHCHECK_PORT||process.env.PORT||3000)+'/healthcheck').then(r=>process.exit(r.status<500?0:1)).catch(()=>process.exit(1))"
+
+CMD ["node", "selfhost/server.js"]

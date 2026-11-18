@@ -1,0 +1,44 @@
+# Self-hosted Table Slayer: no Cloudflare, Turso or Fly accounts required.
+#
+#   cp .env.selfhost.example .env.selfhost   # then edit BASE_URL and INTERNAL_API_TOKEN
+#   docker compose -f docker-compose.selfhost.yml --env-file .env.selfhost up -d --build
+#
+# Only the web container is published. It serves the app, uploaded files and
+# resized images, and forwards realtime websockets (/parties/*) to `realtime`.
+
+name: tableslayer
+
+x-common: &common
+  image: ${TABLESLAYER_IMAGE:-tableslayer-selfhost:latest}
+  build:
+    context: .
+    dockerfile: Dockerfile.selfhost
+  restart: unless-stopped
+  volumes:
+    - ${TABLESLAYER_DATA:-./tableslayer-data}:/data
+  environment: &env
+    BASE_URL: ${BASE_URL:?Set BASE_URL to the URL you open in the browser}
+    INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:?Set INTERNAL_API_TOKEN to a long random string}
+    TZ: ${TZ:-Etc/UTC}
+    # Optional integrations (leave empty to disable)
+    CLOUDFLARE_EMAIL_API_KEY: ${CLOUDFLARE_EMAIL_API_KEY:-}
+    CLOUDFLARE_ACCOUNT_ID: ${CLOUDFLARE_ACCOUNT_ID:-}
+    EMAIL_FROM: ${EMAIL_FROM:-}
+    GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+    GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+
+services:
+  web:
+    <<: *common
+    command: ['node', 'selfhost/server.js']
+    ports:
+      - '${TABLESLAYER_PORT:-3000}:3000'
+    depends_on:
+      - realtime
+
+  realtime:
+    <<: *common
+    command: ['sh', 'selfhost/realtime.sh']
+    environment:
+      <<: *env
+      HEALTHCHECK_PORT: '1999'

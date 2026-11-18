@@ -1,5 +1,12 @@
 fly.toml
 Dockerfile
-.dockerignore
-node_modules
 .git
+**/node_modules
+**/.svelte-kit
+**/.turbo
+**/build
+**/dist
+apps/web/data
+apps/web/.env
+apps/web/.wrangler
+**/.DS_Store

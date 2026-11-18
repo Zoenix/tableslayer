@@ -1,0 +1,36 @@
+# TrueNAS SCALE (24.10+): Apps -> Discover Apps -> ⋮ -> Install via YAML. Paste this file.
+#
+# Before installing:
+#   1. Create a dataset, e.g. /mnt/tank/apps/tableslayer   (replace "tank" below)
+#   2. Replace YOUR_GITHUB_USER with the owner of your fork (image built by GitHub Actions)
+#   3. Set BASE_URL and INTERNAL_API_TOKEN (generate with: openssl rand -hex 32)
+#
+# Open http://<truenas-ip>:3000 afterwards. The first start downloads ~155 MB of
+# static assets (maps, illustrations, LUTs) into the dataset; after that the app
+# runs fully offline.
+
+services:
+  web:
+    image: ghcr.io/YOUR_GITHUB_USER/tableslayer:latest
+    command: ['node', 'selfhost/server.js']
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    volumes:
+      - /mnt/tank/apps/tableslayer:/data
+    environment: &env
+      BASE_URL: http://192.168.1.50:3000
+      INTERNAL_API_TOKEN: CHANGE_ME_TO_A_LONG_RANDOM_STRING
+      TZ: Europe/Berlin
+    depends_on:
+      - realtime
+
+  realtime:
+    image: ghcr.io/YOUR_GITHUB_USER/tableslayer:latest
+    command: ['sh', 'selfhost/realtime.sh']
+    restart: unless-stopped
+    volumes:
+      - /mnt/tank/apps/tableslayer:/data
+    environment:
+      <<: *env
+      HEALTHCHECK_PORT: '1999'
