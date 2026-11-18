@@ -1,4 +1,5 @@
 import {
+  getBucketUrl,
   getPartiesForUser,
   getUser,
   isEmailEnabled,
@@ -9,7 +10,7 @@ import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async (event) => {
   const envName = process.env.ENV_NAME || 'development';
-  const bucketUrl = process.env.CLOUDFLARE_R2_BUCKET_URL || 'https://files.tableslayer.com';
+  const bucketUrl = getBucketUrl();
   const stripeEnabled = isStripeEnabled();
   const googleOAuthEnabled = isGoogleOAuthEnabled();
   const emailEnabled = isEmailEnabled();

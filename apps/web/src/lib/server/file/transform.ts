@@ -1,4 +1,6 @@
-const BUCKET_URL = process.env.CLOUDFLARE_R2_BUCKET_URL || 'https://files.tableslayer.com';
+import { getBucketUrl, getLocalImageDetails, isLocalStorage } from './localStorage';
+
+const BUCKET_URL = getBucketUrl();
 
 type ImageDetails = {
   width: number;
@@ -59,8 +61,9 @@ export const transformImage = async (urlFragment: string, options: string): Prom
   const resizedUrl = `${BUCKET_URL}/cdn-cgi/image/${options}/${urlFragment}`;
 
   try {
-    const detailsUrl = `${BUCKET_URL}/cdn-cgi/image/format=json,${options}/${urlFragment}`;
-    const details = await getImageDetails(detailsUrl);
+    const details = isLocalStorage()
+      ? await getLocalImageDetails(urlFragment, options)
+      : await getImageDetails(`${BUCKET_URL}/cdn-cgi/image/format=json,${options}/${urlFragment}`);
     return { url, resizedUrl, details };
   } catch (error) {
     console.error('Error transforming image, using fallback:', error);

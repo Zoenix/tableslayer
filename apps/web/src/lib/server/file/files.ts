@@ -5,15 +5,24 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 import type { Readable } from 'stream';
+import {
+  contentTypeForKey,
+  copyLocalObject,
+  generateLocalSignedWriteUrl,
+  getBucketUrl,
+  isLocalStorage,
+  putLocalObject,
+  statLocalObject
+} from './localStorage';
 
 // Setup R2 Client
 export const r2 = new S3Client({
-  endpoint: `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  endpoint: process.env.S3_ENDPOINT || `https://${process.env.CLOUDFLARE_ACCOUNT_ID}.r2.cloudflarestorage.com`,
   credentials: {
     accessKeyId: process.env.CLOUDFLARE_R2_ACCESS_KEY!,
     secretAccessKey: process.env.CLOUDFLARE_R2_SECRET_KEY!
   },
-  region: 'auto',
+  region: process.env.S3_REGION || 'auto',
   forcePathStyle: true
 });
 
@@ -23,6 +32,12 @@ const generateRandomFileName = (originalName: string) => {
   const extensionMatch = originalName.match(/\.([a-zA-Z0-9]+)$/);
   const extension = extensionMatch ? `.${extensionMatch[1]}` : '';
   return `${randomUUID()}${extension}`;
+};
+
+const streamToBuffer = async (stream: Readable) => {
+  const chunks: Buffer[] = [];
+  for await (const chunk of stream) chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+  return Buffer.concat(chunks);
 };
 
 const uploadToR2 = async (
@@ -40,6 +55,11 @@ const uploadToR2 = async (
   // If there's a destination folder, include it in the key
   if (normalizedFolder) {
     key = `${normalizedFolder}/${fileName}`;
+  }
+
+  if (isLocalStorage()) {
+    const body = Buffer.isBuffer(fileStream) ? fileStream : await streamToBuffer(fileStream);
+    return putLocalObject(key, body);
   }
 
   const putObjectParams = {
@@ -234,6 +254,12 @@ export const getFile = async (fileId: number) => {
 };
 
 export const getR2FileInfo = async (fileName: string) => {
+  if (isLocalStorage()) {
+    const stats = await statLocalObject(fileName);
+    if (!stats) throw new Error(`File not found: ${fileName}`);
+    return { ContentType: await contentTypeForKey(fileName), ContentLength: stats.size, LastModified: stats.mtime };
+  }
+
   try {
     const getObjectParams = {
       Bucket: CLOUDFLARE_BUCKET_NAME,
@@ -254,6 +280,8 @@ export const getR2FileInfo = async (fileName: string) => {
 };
 
 export const generatePresignedReadUrl = async (fileName: string): Promise<string> => {
+  if (isLocalStorage()) return `${getBucketUrl()}/${fileName}`;
+
   const command = new GetObjectCommand({
     Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
     Key: fileName
@@ -264,6 +292,8 @@ export const generatePresignedReadUrl = async (fileName: string): Promise<string
 };
 
 export const generatePresignedWriteUrl = async (fileName: string, contentType: string): Promise<string> => {
+  if (isLocalStorage()) return generateLocalSignedWriteUrl(fileName, contentType);
+
   const command = new PutObjectCommand({
     Bucket: process.env.CLOUDFLARE_R2_BUCKET_NAME!,
     Key: fileName,
@@ -296,6 +326,8 @@ export const createUserFileFromLocation = async (location: string, userId: strin
  * @returns The destination key if successful
  */
 export const copyR2File = async (sourceKey: string, destinationKey: string): Promise<string> => {
+  if (isLocalStorage()) return copyLocalObject(sourceKey, destinationKey);
+
   try {
     const copyObjectParams = {
       Bucket: CLOUDFLARE_BUCKET_NAME,
