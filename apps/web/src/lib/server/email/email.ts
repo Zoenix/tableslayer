@@ -7,7 +7,12 @@ interface EmailOptions {
   from?: string;
 }
 
-export const sendSingleEmail = async ({ from = 'no-reply@tableslayer.com', to, subject, html }: EmailOptions) => {
+export const sendSingleEmail = async ({
+  from = process.env.EMAIL_FROM || 'no-reply@tableslayer.com',
+  to,
+  subject,
+  html
+}: EmailOptions) => {
   if (!process.env.CLOUDFLARE_EMAIL_API_KEY || !process.env.CLOUDFLARE_ACCOUNT_ID) {
     console.error('CLOUDFLARE_EMAIL_API_KEY or CLOUDFLARE_ACCOUNT_ID is not set');
     return;

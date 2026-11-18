@@ -125,8 +125,8 @@ export const createUserByEmailAndPassword = async (email: string, password: stri
         await db.update(usersTable).set({ avatarFileId: fileToUserRow.fileId }).where(eq(usersTable.id, userId));
       }
     } catch (avatarError) {
-      console.error('Error uploading avatar', avatarError);
-      throw avatarError;
+      // Offline/LAN-only installs can't reach Gravatar; keep the default avatar
+      console.error('Error uploading avatar, using default', avatarError);
     }
 
     // Create a personal party for the user

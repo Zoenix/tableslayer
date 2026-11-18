@@ -17,13 +17,16 @@ const extractNameFromEmail = (email: string): string => {
 
 export const getGravatarDisplayName = async (email: string): Promise<string> => {
   const hash = getEmailHash(email);
-  const response = await fetch(`https://gravatar.com/${hash}.json`);
-
-  if (response.ok) {
-    const profile = (await response.json()) as { entry: Array<{ displayName?: string }> };
-    if (profile.entry[0]) {
-      return profile.entry[0].displayName || extractNameFromEmail(email);
+  try {
+    const response = await fetch(`https://gravatar.com/${hash}.json`, { signal: AbortSignal.timeout(5000) });
+    if (response.ok) {
+      const profile = (await response.json()) as { entry: Array<{ displayName?: string }> };
+      if (profile.entry[0]) {
+        return profile.entry[0].displayName || extractNameFromEmail(email);
+      }
     }
+  } catch (error) {
+    console.warn('Gravatar profile lookup failed', error);
   }
   // Fallback if Gravatar profile or display name is not found
   return extractNameFromEmail(email);

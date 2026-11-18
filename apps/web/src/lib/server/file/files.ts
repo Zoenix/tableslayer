@@ -86,7 +86,7 @@ const uploadToR2 = async (
 export const uploadFileFromUrl = async (imageUrl: string, userId: string, destinationFolder?: string) => {
   try {
     // Get the image as a buffer
-    const response = await fetch(imageUrl);
+    const response = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
 
     if (!response.ok) {
       throw new Error(`Failed to download image from ${imageUrl}: ${response.status} ${response.statusText}`);
