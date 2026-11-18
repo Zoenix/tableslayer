@@ -84,7 +84,40 @@ Manager, Traefik, Caddy). Requirements:
 - `BASE_URL` is set to the public URL, e.g. `https://tableslayer.example.com`.
 - Raise the proxy's upload limit to ~200 MB for large maps (NPM: `client_max_body_size 200m;`).
 
-Plain `http://` on the LAN works too. Session cookies are only marked `Secure` on https.
+Plain `http://` on the LAN works too. Session cookies are only marked `Secure` on https, and
+"copy link" buttons need https because browsers only allow clipboard access on secure pages.
+
+## Tailscale Serve
+
+[Tailscale Serve](https://tailscale.com/kb/1312/serve) gives the app an HTTPS address that only
+devices on your tailnet can reach. It passes websockets through, so live sync works.
+
+1. In the Tailscale admin console, enable **MagicDNS** and **HTTPS certificates**.
+2. Serve port 3000 at the root of the NAS's tailnet name:
+   ```sh
+   tailscale serve --bg 3000
+   ```
+   If Tailscale runs in a container without host networking, point it at the NAS's LAN address
+   instead: `tailscale serve --bg http://<nas-ip>:3000`.
+3. Set both `BASE_URL` and `ORIGIN` to that address (no trailing slash; include the port if you
+   serve on one other than 443):
+   ```yaml
+   BASE_URL: https://truenas.your-tailnet.ts.net
+   ORIGIN: https://truenas.your-tailnet.ts.net
+   ```
+   `ORIGIN` pins the app's public address, so it doesn't depend on which forwarded headers
+   Tailscale sends.
+
+Things to know:
+
+- **Use only the `ts.net` address.** With `ORIGIN` set to https, logins over
+  `http://<nas-ip>:3000` won't stick, and map and image URLs always point at the `ts.net` name.
+- **Serve at `/`, not under a path.** The app expects to live at the root, so
+  `https://….ts.net/tableslayer` won't work.
+- **Every device needs Tailscale**, including the table display and players' phones. For a fixed
+  group, share the NAS node with their Tailscale accounts.
+- **Use Serve, not Funnel.** Funnel publishes the app on the public internet, where anyone who
+  finds the URL can create an account.
 
 ## Configuration reference
 

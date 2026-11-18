@@ -20,6 +20,9 @@ services:
       - /mnt/tank/apps/tableslayer:/data
     environment: &env
       BASE_URL: http://192.168.1.50:3000
+      # Behind Tailscale Serve or another HTTPS proxy, set BASE_URL and ORIGIN to that
+      # https address instead (see SELFHOSTING.md):
+      # ORIGIN: https://truenas.your-tailnet.ts.net
       INTERNAL_API_TOKEN: CHANGE_ME_TO_A_LONG_RANDOM_STRING
       TZ: Europe/Berlin
     depends_on:
