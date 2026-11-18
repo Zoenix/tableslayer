@@ -3,6 +3,7 @@ import { type Client, createClient } from '@libsql/client';
 import { config } from 'dotenv';
 import { drizzle } from 'drizzle-orm/libsql';
 import fs from 'fs';
+import path from 'path';
 import { makeResilientClient } from './resilientClient';
 
 config({ path: '.env' });
@@ -12,8 +13,27 @@ const dbPath = '/app/data/turso_local.db';
 let client: Client;
 let databaseMode = 'unknown';
 
+// No database configured: default to a local SQLite file (self-hosting, builds)
+process.env.TURSO_APP_DB_URL ||= 'file:./data/tableslayer.db';
+const isLocalFile = process.env.TURSO_APP_DB_URL.startsWith('file:');
+
+// Self-hosted: a plain SQLite file on disk, no Turso account or sync involved
+const initializeLocalFileDatabase = async () => {
+  const url = process.env.TURSO_APP_DB_URL!;
+  const filePath = url.slice('file:'.length);
+  fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true });
+  client = createClient({ url });
+  await client.execute('PRAGMA journal_mode = WAL');
+  await client.execute('PRAGMA busy_timeout = 5000');
+  await client.execute('PRAGMA foreign_keys = ON');
+  databaseMode = 'local-file';
+  console.log(`💾 DATABASE MODE: Using local SQLite file ${filePath}`);
+};
+
 const initializeDatabase = async () => {
-  if (isProduction) {
+  if (isLocalFile) {
+    await initializeLocalFileDatabase();
+  } else if (isProduction) {
     try {
       // Check if the directory exists first
       if (!fs.existsSync('/app/data')) {

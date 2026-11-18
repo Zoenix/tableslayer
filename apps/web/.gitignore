@@ -23,3 +23,6 @@ tests/e2e/.auth/
 
 # Local worker secrets for wrangler dev
 .dev.vars
+
+# self-hosted local data (sqlite db, uploaded files, realtime state)
+data/
