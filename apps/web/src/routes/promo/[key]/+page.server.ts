@@ -2,7 +2,7 @@ import { getPartiesForUser } from '#lib/server/index.js';
 import { getPromoUsageCount, hasUserRedeemedPromo, validatePromo } from '#lib/server/promo/index.js';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals, cookies }) => {
+export const load: PageServerLoad = async ({ params, locals, cookies, url }) => {
   const { key } = params;
 
   // Validate promo first
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
     cookies.set('promo', key, {
       path: '/',
       httpOnly: true,
-      secure: true,
+      secure: url.protocol === 'https:',
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 // 24 hours
     });
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ params, locals, cookies }) => {
     cookies.set('redirect_after_login', `/promo/${key}`, {
       path: '/',
       httpOnly: true,
-      secure: true,
+      secure: url.protocol === 'https:',
       sameSite: 'lax',
       maxAge: 60 * 60 // 1 hour
     });

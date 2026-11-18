@@ -60,6 +60,8 @@ export function setSessionTokenCookie(event: RequestEvent, token: string, expire
   event.cookies.set('session', token, {
     httpOnly: true,
     sameSite: 'lax',
+    // Plain-http LAN installs (self-hosting) cannot store Secure cookies
+    secure: event.url.protocol === 'https:',
     expires: expiresAt || new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
     path: '/'
   });
@@ -69,6 +71,7 @@ export function deleteSessionTokenCookie(event: RequestEvent): void {
   event.cookies.set('session', '', {
     httpOnly: true,
     sameSite: 'lax',
+    secure: event.url.protocol === 'https:',
     maxAge: 0,
     path: '/'
   });

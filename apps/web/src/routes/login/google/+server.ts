@@ -20,14 +20,16 @@ export async function GET(event: RequestEvent): Promise<Response> {
     path: '/',
     httpOnly: true,
     maxAge: 60 * 10, // 10 minutes
-    sameSite: 'lax'
+    sameSite: 'lax',
+    secure: event.url.protocol === 'https:'
   });
 
   event.cookies.set('google_code_verifier', codeVerifier, {
     path: '/',
     httpOnly: true,
     maxAge: 60 * 10, // 10 minutes
-    sameSite: 'lax'
+    sameSite: 'lax',
+    secure: event.url.protocol === 'https:'
   });
 
   return redirect(302, url.toString(), { external: true });
