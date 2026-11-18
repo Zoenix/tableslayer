@@ -38,7 +38,6 @@ ENV NODE_ENV=production \
     REALTIME_INTERNAL_URL=http://realtime:1999 \
     APP_API_URL=http://web:3000
 
-VOLUME ["/data"]
 WORKDIR /app/apps/web
 EXPOSE 3000 1999
 

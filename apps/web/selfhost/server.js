@@ -1,7 +1,8 @@
 /**
  * Production entrypoint for self-hosted Table Slayer.
  *
- * 1. Applies database migrations (local SQLite or Turso)
+ * 0. Refuses to start if /data isn't mounted from the host (data would be lost)
+ * 1. Backs up the database, then applies migrations (local SQLite or Turso)
  * 2. Mirrors static assets into local storage in the background
  * 3. Serves the SvelteKit app and forwards realtime websockets (/parties/*)
  *    to the realtime container, so browsers only ever talk to one origin
@@ -15,11 +16,13 @@ import net from 'net';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { downloadStaticAssets } from '../scripts/assets-download.js';
+import { assertPersistentDataRoot, backupDatabase } from './dataSafety.js';
 
 const appDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const port = Number(process.env.PORT) || 3000;
 const host = process.env.HOST || '0.0.0.0';
 const realtimeUrl = new URL(process.env.REALTIME_INTERNAL_URL || 'http://localhost:1999');
+const dataRoot = process.env.DATA_ROOT || '/data';
 
 const runMigrations = async () => {
   const url = (process.env.TURSO_APP_DB_URL ||= `file:${path.join(appDir, 'data/tableslayer.db')}`);
@@ -27,6 +30,11 @@ const runMigrations = async () => {
     fs.mkdirSync(path.dirname(path.resolve(url.slice('file:'.length))), { recursive: true });
   }
   const client = createClient({ url, authToken: process.env.TURSO_APP_DB_AUTH_TOKEN });
+  if (url.startsWith('file:') && process.env.SKIP_DB_BACKUP !== 'true') {
+    const dbFile = path.resolve(url.slice('file:'.length));
+    const backup = await backupDatabase(client, dbFile, path.join(path.dirname(dbFile), 'backups'));
+    if (backup) console.log(`🗄️  Database backed up to ${backup}`);
+  }
   console.log('⏳ Applying database migrations...');
   await migrate(drizzle(client), { migrationsFolder: path.join(appDir, 'src/lib/db/app/migrations') });
   client.close();
@@ -74,6 +82,11 @@ const proxyUpgrade = (req, socket, head) => {
   upstream.setNoDelay(true);
   socket.setNoDelay(true);
 };
+
+const usesDataRoot = [process.env.TURSO_APP_DB_URL?.replace(/^file:/, ''), process.env.LOCAL_STORAGE_PATH].some(
+  (dir) => dir && path.resolve(dir).startsWith(path.resolve(dataRoot) + path.sep)
+);
+if (usesDataRoot) assertPersistentDataRoot(dataRoot);
 
 if (process.env.SKIP_MIGRATIONS !== 'true') await runMigrations();
 syncAssets();
