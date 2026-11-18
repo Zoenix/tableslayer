@@ -15,7 +15,7 @@ CREATE TABLE `__new_light` (
 	CONSTRAINT "protected_light_opacity" CHECK("__new_light"."opacity" >= 0 AND "__new_light"."opacity" <= 1)
 );
 --> statement-breakpoint
-INSERT INTO `__new_light`("id", "scene_id", "position_x", "position_y", "radius", "color", "style", "pulse", "opacity") SELECT "id", "scene_id", "position_x", "position_y", "radius", "color", "style", "pulse", "opacity" FROM `light`;--> statement-breakpoint
+INSERT INTO `__new_light`("id", "scene_id", "position_x", "position_y", "radius", "color", "style", "pulse", "opacity") SELECT "id", "scene_id", "position_x", "position_y", "radius", "color", "style", "pulse", 1 FROM `light`;--> statement-breakpoint
 DROP TABLE `light`;--> statement-breakpoint
 ALTER TABLE `__new_light` RENAME TO `light`;--> statement-breakpoint
 PRAGMA foreign_keys=ON;--> statement-breakpoint
