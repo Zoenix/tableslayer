@@ -2,6 +2,9 @@
 
 Table Slayer provides tools for game masters to project animated battle maps on their digital tabletop.
 
+> **Self-hosted fork.** This branch runs fully on your own hardware (TrueNAS SCALE / Docker) with no
+> Cloudflare, Turso or Fly accounts. See **[SELFHOSTING.md](SELFHOSTING.md)**.
+
 ![Table Slayer](https://snid.es/2025MAR/u3TtzdPZ8LzoxyA5.png)
 
 ## Credits
