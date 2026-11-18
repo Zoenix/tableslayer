@@ -7,6 +7,8 @@ on:
 
 jobs:
   update-deps:
+    # Upstream infrastructure only (Fly, Turso, npm); skipped on self-hosted forks
+    if: github.repository == 'Siege-Perilous/tableslayer'
     runs-on: ubuntu-latest
 
     permissions:

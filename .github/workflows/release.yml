@@ -12,6 +12,8 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   release:
+    # Upstream infrastructure only (Fly, Turso, npm); skipped on self-hosted forks
+    if: github.repository == 'Siege-Perilous/tableslayer'
     name: Release
     runs-on: ubuntu-latest
     permissions:
