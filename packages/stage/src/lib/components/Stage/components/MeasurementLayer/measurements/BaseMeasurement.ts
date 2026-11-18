@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { v4 as uuidv4 } from 'uuid';
 import { hexDistance, pixelToHex, type HexCoordinate } from '../../../helpers/grid';
 import type { GridLayerProps } from '../../GridLayer/types';
 import { GridType } from '../../GridLayer/types';
@@ -129,7 +130,7 @@ export abstract class BaseMeasurement implements IMeasurement {
     displayProps: DisplayProps,
     gridProps: GridLayerProps
   ) {
-    this.id = crypto.randomUUID();
+    this.id = uuidv4();
     this.type = type;
     this.startPoint = startPoint.clone();
     this.endPoint = startPoint.clone();

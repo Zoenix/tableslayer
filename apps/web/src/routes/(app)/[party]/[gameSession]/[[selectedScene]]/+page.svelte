@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { v4 as uuidv4 } from 'uuid';
   import { goto } from '$app/navigation';
   import { navigating, page } from '$app/state';
   import {
@@ -963,7 +964,7 @@
 
   const onAnnotationCreated = () => {
     const newAnnotation: AnnotationLayerData = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       name: `Drawing ${stageProps.annotations.layers.length + 1}`,
       color: annotationColors[Math.floor(Math.random() * annotationColors.length)],
       opacity: 1.0,
@@ -1104,7 +1105,7 @@
   // writing the whole array through queuePropertyUpdate gives realtime sync
   // and undo for free
   const onFogRoomAdd = (points: { x: number; y: number }[]) => {
-    const rooms = [...stageProps.fogOfWar.rooms, { id: crypto.randomUUID(), points, enabled: true }];
+    const rooms = [...stageProps.fogOfWar.rooms, { id: uuidv4(), points, enabled: true }];
     queuePropertyUpdate(stageProps, ['fogOfWar', 'rooms'], rooms, 'control');
     trackChecklistItemLocal('fog-room');
   };
