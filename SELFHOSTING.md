@@ -46,6 +46,13 @@ TrueNAS can't build images from source in the Apps UI, so publish one to GitHub'
 
 e.g. `tank/apps/tableslayer`. The containers run as root, so default permissions are fine.
 
+**This dataset is where all your data lives.** Both containers must mount it at `/data`, and they
+refuse to start without that mount, rather than silently keeping data inside the container, where
+an update would throw it away.
+
+Add a snapshot task for it too: **Data Protection → Periodic Snapshot Tasks → Add**, select the
+dataset, daily, keep 2 weeks. That lets you roll back any mistake.
+
 ### 3. Install
 
 **Apps → Discover Apps → ⋮ → Install via YAML**, paste [`selfhost-truenas.yaml`](selfhost-truenas.yaml),
@@ -62,7 +69,15 @@ static assets download.
 ### Updating
 
 Push or merge into `selfhost` → wait for the Action → in TrueNAS, **Apps → tableslayer → Update** (or
-restart it to pull `latest`). Migrations run automatically.
+restart it to pull `latest`). On every start the web container first copies the database to
+`db/backups/` (newest 10 kept), then runs migrations.
+
+Updating never touches the dataset, as long as it is mounted. To be safe:
+
+- Check the web container's log after an update. It should print
+  `💾 Data directory /data → <your-pool>/...` and `🗄️ Database backed up to ...`.
+- Never run `docker volume prune` / `docker system prune --volumes` on the NAS.
+- Don't change the dataset path in the app's YAML unless you've moved the data there.
 
 ## Docker Compose (any host)
 
@@ -133,6 +148,9 @@ Things to know:
 | `APP_API_URL`                                                     | `http://web:3000`              | How realtime reaches the web container                             |
 | `PUBLIC_PARTYKIT_HOST`                                            | empty (same origin)            | Only set if realtime is exposed on its own host                    |
 | `ORIGIN`                                                          | empty                          | Pin the public origin instead of trusting forwarded headers        |
+| `DATA_ROOT`                                                       | `/data`                        | Must be a host mount; containers refuse to start otherwise         |
+| `REQUIRE_DATA_MOUNT`                                              | `true`                         | `false` to run with throwaway data on purpose                      |
+| `SKIP_DB_BACKUP`                                                  | `false`                        | Skip the database copy to `db/backups/` on start                   |
 | `SKIP_ASSET_DOWNLOAD`                                             | `false`                        | Skip mirroring files.tableslayer.com assets on start               |
 | `EMAIL_FROM`, `CLOUDFLARE_EMAIL_API_KEY`, `CLOUDFLARE_ACCOUNT_ID` | empty                          | Optional email                                                     |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`                        | empty                          | Optional Google login (callback: `BASE_URL/login/google/callback`) |
@@ -150,7 +168,35 @@ Everything lives in the one data folder:
 - `files/`: uploaded maps, markers, fog masks (`files/.cache` is safe to delete)
 - `realtime/`: live session snapshots (rebuilt from the database if lost)
 
-A periodic ZFS snapshot of the dataset covers it.
+A periodic ZFS snapshot of the dataset covers it. On top of that, the web container saves a copy of
+the database to `db/backups/` on every start (newest 10 kept). To restore one, stop the app, copy
+the backup over `db/tableslayer.db` (delete any `tableslayer.db-wal` / `-shm` next to it), and start
+the app again.
+
+## Recovering data after an update
+
+If users or games disappeared after an update, the data was almost certainly written somewhere
+other than your dataset, most likely because `/data` wasn't mounted, so it went to a temporary
+Docker volume. Don't prune anything yet. In **System → Shell**:
+
+1. See what the running container mounts:
+   ```sh
+   sudo docker ps --format '{{.Names}}' | grep web
+   sudo docker inspect <web-container-name> --format '{{json .Mounts}}'
+   ```
+2. Look for leftover Docker volumes that still contain a Table Slayer database:
+   ```sh
+   for v in $(sudo docker volume ls -q); do
+     p=$(sudo docker volume inspect -f '{{.Mountpoint}}' "$v")
+     sudo test -f "$p/db/tableslayer.db" && echo "$v -> $p" && sudo ls -la "$p/db"
+   done
+   ```
+3. Check whether the dataset has ZFS snapshots:
+   `ls /mnt/<pool>/apps/tableslayer/.zfs/snapshot`
+4. If you find the data, stop the app, copy it into the dataset, and start the app:
+   ```sh
+   sudo cp -a <found-path>/. /mnt/<pool>/apps/tableslayer/
+   ```
 
 ## Running without Docker
 
