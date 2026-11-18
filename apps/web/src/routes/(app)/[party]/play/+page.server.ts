@@ -5,6 +5,7 @@ import {
   getPartyGameSessions,
   getUser
 } from '#lib/server/index.js';
+import { getPartykitHost } from '#lib/server/realtime/host.js';
 import { getSceneList } from '#lib/server/scene/index.js';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
@@ -15,7 +16,7 @@ import type { PageServerLoad } from './$types';
 // session doc once connected — the DB is not part of the realtime loop.
 export const load: PageServerLoad = async (event) => {
   const { params } = event;
-  const partykitHost = process.env.PUBLIC_PARTYKIT_HOST || 'localhost:1999';
+  const partykitHost = getPartykitHost();
 
   const party = await getPartyFromSlug(params.party);
   if (!party) {

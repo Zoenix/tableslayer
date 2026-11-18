@@ -1,9 +1,10 @@
 import { getDatabaseMode } from '#lib/db/app/index.js';
-import { isEmailEnabled, isGoogleOAuthEnabled, isStripeEnabled } from '#lib/server/index.js';
+import { getBucketUrl, isEmailEnabled, isGoogleOAuthEnabled, isStripeEnabled } from '#lib/server/index.js';
+import { getPartykitHost } from '#lib/server/realtime/host.js';
 import { json, type RequestHandler } from '@sveltejs/kit';
 
 export const GET: RequestHandler = async () => {
-  const partykitHost = process.env.PUBLIC_PARTYKIT_HOST || 'localhost:1999';
+  const partykitHost = getPartykitHost() || 'same-origin';
 
   return json({
     status: 'ok',
@@ -15,7 +16,7 @@ export const GET: RequestHandler = async () => {
     isStripeEnabled: isStripeEnabled(),
     isGoogleOAuthEnabled: isGoogleOAuthEnabled(),
     isEmailEnabled: isEmailEnabled(),
-    r2BucketUrl: process.env.CLOUDFLARE_R2_BUCKET_URL || 'Not configured',
+    r2BucketUrl: getBucketUrl(),
     partykit: {
       host: partykitHost,
       url: partykitHost.includes('localhost') ? `ws://${partykitHost}` : `wss://${partykitHost}`

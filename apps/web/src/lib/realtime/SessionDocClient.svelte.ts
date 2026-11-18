@@ -26,6 +26,15 @@ export interface SessionDocClientOptions {
 
 export type ConnectionState = 'connecting' | 'connected' | 'disconnected';
 
+// An empty host means the realtime server sits behind the app's own origin
+// (self-hosted). An https page must always use wss, whatever the host looks like.
+const resolveRealtimeEndpoint = (configuredHost: string) => {
+  const host = configuredHost || window.location.host;
+  const secure = window.location.protocol === 'https:';
+  const protocol: 'ws' | 'wss' | undefined = secure ? 'wss' : configuredHost ? undefined : 'ws';
+  return { host, protocol };
+};
+
 /**
  * The single client-side entry point to a game session's shared state.
  *
@@ -99,12 +108,15 @@ export class SessionDocClient {
     this.systemWrite = createSessionWriter(this.doc, this.systemOrigin);
     this.party = createPartyWriter(this.partyDoc, this.origin);
 
-    this.#gameSessionProvider = new YProvider(options.partykitHost, options.gameSessionId, this.doc, {
+    const { host, protocol } = resolveRealtimeEndpoint(options.partykitHost);
+    this.#gameSessionProvider = new YProvider(host, options.gameSessionId, this.doc, {
       party: 'game-session',
+      protocol,
       params: { userId: options.userId }
     });
-    this.#partyProvider = new YProvider(options.partykitHost, options.partyId, this.partyDoc, {
+    this.#partyProvider = new YProvider(host, options.partyId, this.partyDoc, {
       party: 'party',
+      protocol,
       params: { userId: options.userId }
     });
 

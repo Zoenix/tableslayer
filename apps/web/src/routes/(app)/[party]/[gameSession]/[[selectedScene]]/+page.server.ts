@@ -5,6 +5,7 @@ import {
   getMarkersForScene,
   getUserChecklistState
 } from '#lib/server/index.js';
+import { getPartykitHost } from '#lib/server/realtime/host.js';
 import { createScene, getScene, getSceneMaskData, getScenes } from '#lib/server/scene/index.js';
 import { getPreferenceServer } from '#lib/utils/gameSessionPreferences.js';
 import { redirect } from '@sveltejs/kit';
@@ -15,7 +16,7 @@ import type { PageServerLoad } from './$types';
 // scene content comes from the session doc once the realtime connection is ready.
 export const load: PageServerLoad = async ({ parent, params, url, cookies }) => {
   const { gameSession, activeScene, gameSessions, user, parties } = await parent();
-  const partykitHost = process.env.PUBLIC_PARTYKIT_HOST || 'localhost:1999';
+  const partykitHost = getPartykitHost();
 
   let scenes = await getScenes(gameSession.id);
   if (scenes.length === 0) {

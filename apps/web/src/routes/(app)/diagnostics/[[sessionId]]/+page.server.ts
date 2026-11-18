@@ -1,9 +1,11 @@
 import { db, getDatabaseMode } from '#lib/db/app/index.js';
 import { gameSessionTable, partyMemberTable, partyTable, sceneTable } from '#lib/db/app/schema.js';
 import { getAnnotationMasksForScene, getAnnotationsForScene } from '#lib/server/annotations.js';
+import { getBucketUrl } from '#lib/server/file/localStorage.js';
 import { transformImage } from '#lib/server/file/transform.js';
 import { getLightsForScene } from '#lib/server/light/index.js';
 import { getMarkersForScene } from '#lib/server/marker/index.js';
+import { getRealtimeInternalUrl } from '#lib/server/realtime/host.js';
 import { getScene, getSceneMaskData, getScenes } from '#lib/server/scene/index.js';
 import { DEFAULT_MAP } from '#lib/utils/generateR2Url.js';
 import { count, desc, eq, inArray } from 'drizzle-orm';
@@ -44,7 +46,6 @@ const timeAsync = async <T>(fn: () => Promise<T>): Promise<{ result: T; duration
 export const load: PageServerLoad = async ({ parent, params }) => {
   const { user } = await parent();
   const results: DiagnosticResult[] = [];
-  const partykitHost = process.env.PUBLIC_PARTYKIT_HOST || 'localhost:1999';
 
   // Get selected session from route params
   const selectedSessionId = params.sessionId || null;
@@ -289,7 +290,7 @@ export const load: PageServerLoad = async ({ parent, params }) => {
   // PartyKit round-trip test - uses a test room to measure actual message latency
   const testRoomId = selectedSession?.id || 'diagnostics-test';
   try {
-    const partykitUrl = partykitHost.includes('localhost') ? `http://${partykitHost}` : `https://${partykitHost}`;
+    const partykitUrl = getRealtimeInternalUrl();
 
     const { result: pingResult, duration: partykitTime } = await timeAsync(async () => {
       const controller = new AbortController();
@@ -329,7 +330,7 @@ export const load: PageServerLoad = async ({ parent, params }) => {
     });
   }
 
-  const bucketUrl = process.env.CLOUDFLARE_R2_BUCKET_URL || 'https://files.tableslayer.com';
+  const bucketUrl = getBucketUrl();
 
   const diagnosticsData: DiagnosticsData = {
     results,

@@ -11,6 +11,7 @@ import {
 import type { PartyStateWire, PersistSessionWire, SceneWire, SessionSnapshotWire } from '#lib/realtime/wire.js';
 import { dev } from '$app/env';
 import { and, eq, inArray, notInArray } from 'drizzle-orm';
+import { getRealtimeInternalUrl } from './host';
 
 // Server-to-server auth for /api/internal/* — the PartyKit persister is the only
 // caller. In production INTERNAL_API_TOKEN must be set on both sides; in dev both
@@ -132,11 +133,9 @@ export const applyPartyStatePersist = async (partyId: string, state: PartyStateW
 // tell the live room to rebuild from the database. Best-effort: if the room
 // isn't running, the next connection hydrates from the DB anyway.
 const requestRoomResync = async (party: 'party' | 'game-session', roomId: string) => {
-  const host = process.env.PUBLIC_PARTYKIT_HOST || 'localhost:1999';
-  const protocol = host.startsWith('localhost') || host.startsWith('127.') ? 'http' : 'https';
   const token = process.env.INTERNAL_API_TOKEN || 'dev-internal-token';
   try {
-    await fetch(`${protocol}://${host}/parties/${party}/${roomId}`, {
+    await fetch(`${getRealtimeInternalUrl()}/parties/${party}/${roomId}`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'x-internal-token': token },
       body: JSON.stringify({ type: 'resync' }),
@@ -151,3 +150,4 @@ export const requestPartyRoomResync = (partyId: string) => requestRoomResync('pa
 export const requestGameSessionRoomResync = (gameSessionId: string) => requestRoomResync('game-session', gameSessionId);
 
 export * from './activity';
+export * from './host';
