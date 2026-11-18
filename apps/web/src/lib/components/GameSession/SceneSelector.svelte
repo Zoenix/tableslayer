@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { LEGACY_BUCKET_URL } from '#lib/utils/generateR2Url.js';
   import { goto } from '$app/navigation';
-  import { navigating } from '$app/state';
+  import { navigating, page } from '$app/state';
   import { useDragAndDrop } from '#lib/composables/useDragAndDrop.svelte.js';
   import type { SelectGameSession, SelectParty } from '#lib/db/app/schema.js';
   import { handleMutation, type FormMutationError } from '#lib/factories/index.js';
@@ -66,6 +67,8 @@
     client: SessionDocClient | null;
     isStripeEnabled?: boolean;
   } = $props();
+
+  const bucketUrl: string = page.data.bucketUrl ?? LEGACY_BUCKET_URL;
 
   let file = $state<FileList | null>(null);
   let formIsLoading = $state(false);
@@ -380,10 +383,10 @@
           isDragDisabled(scene.id) && 'scene--no-drag'
         ]}
         style:background-image={scene.mapThumbLocation
-          ? `url('${generateSmallThumbnailUrl(scene.mapThumbLocation)}')`
+          ? `url('${generateSmallThumbnailUrl(scene.mapThumbLocation, bucketUrl)}')`
           : scene.mapLocation && !isVideoFile(scene.mapLocation)
-            ? `url('${generateSmallThumbnailUrl(scene.mapLocation)}')`
-            : `url('https://files.tableslayer.com/illustrations/party/empty.png')`}
+            ? `url('${generateSmallThumbnailUrl(scene.mapLocation, bucketUrl)}')`
+            : `url('${bucketUrl}/illustrations/party/empty.png')`}
         oncontextmenu={(event) => handleContextMenu(event, scene.id)}
         data-drag-id={index.toString()}
         draggable={!isDragDisabled(scene.id)}

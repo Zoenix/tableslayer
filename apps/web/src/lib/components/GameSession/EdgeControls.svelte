@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from '$app/state';
+  import { LEGACY_BUCKET_URL } from '#lib/utils/generateR2Url.js';
   import { type ZodIssue } from 'zod';
   import { Spacer, DualInputSlider, FormControl, InputSlider, Icon, Text } from '@tableslayer/ui';
   import { type StageProps } from '@tableslayer/stage';
@@ -18,15 +20,17 @@
     party: SelectParty & Thumb;
   } = $props();
 
+  const bucketUrl: string = page.data.bucketUrl ?? LEGACY_BUCKET_URL;
+
   const EDGE_TEXTURES = [
-    'https://files.tableslayer.com/edgetextures/clouds-01.webp',
-    'https://files.tableslayer.com/edgetextures/forrest-01.webp',
-    'https://files.tableslayer.com/edgetextures/ice-01.webp',
-    'https://files.tableslayer.com/edgetextures/ice-02.webp',
-    'https://files.tableslayer.com/edgetextures/stars-01.webp',
-    'https://files.tableslayer.com/edgetextures/stars-02.webp',
-    'https://files.tableslayer.com/edgetextures/stone-01.webp',
-    'https://files.tableslayer.com/edgetextures/stone-02.webp'
+    `${bucketUrl}/edgetextures/clouds-01.webp`,
+    `${bucketUrl}/edgetextures/forrest-01.webp`,
+    `${bucketUrl}/edgetextures/ice-01.webp`,
+    `${bucketUrl}/edgetextures/ice-02.webp`,
+    `${bucketUrl}/edgetextures/stars-01.webp`,
+    `${bucketUrl}/edgetextures/stars-02.webp`,
+    `${bucketUrl}/edgetextures/stone-01.webp`,
+    `${bucketUrl}/edgetextures/stone-02.webp`
   ];
 
   const handleEdgeUrlChange = (value: string) => {

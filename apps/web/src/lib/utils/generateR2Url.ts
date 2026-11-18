@@ -11,7 +11,18 @@ export type R2TransformOptions = {
   quality?: number;
 };
 
-const DEFAULT_R2_BASE_URL = 'https://files.tableslayer.com';
+export const LEGACY_BUCKET_URL = 'https://files.tableslayer.com';
+const DEFAULT_R2_BASE_URL = LEGACY_BUCKET_URL;
+
+/**
+ * Points a stored absolute asset URL at the configured bucket. Scenes, exports and
+ * defaults may carry tableslayer.com CDN URLs; self-hosted installs serve the
+ * same keys from their own storage.
+ */
+export const toBucketUrl = <T extends string | null | undefined>(url: T, bucketUrl?: string): T => {
+  if (!url || !bucketUrl || bucketUrl === LEGACY_BUCKET_URL) return url;
+  return (url.startsWith(LEGACY_BUCKET_URL) ? bucketUrl + url.slice(LEGACY_BUCKET_URL.length) : url) as T;
+};
 
 /**
  * The placeholder map new scenes are born with: a MapDefined battle map whose

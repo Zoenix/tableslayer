@@ -2,7 +2,13 @@ import { type SelectAnnotation, type SelectLight, type SelectMarker, type Select
 import { base64ToUint8 } from '#lib/realtime/binary.js';
 import type { Thumb } from '#lib/server/index.js';
 import { StageDefaultProps } from '#lib/utils/defaultMapState.js';
-import { generateLargeImageUrl, generateSquareThumbnailUrl, isDefaultMap } from '#lib/utils/generateR2Url.js';
+import {
+  generateLargeImageUrl,
+  generateSquareThumbnailUrl,
+  isDefaultMap,
+  LEGACY_BUCKET_URL,
+  toBucketUrl
+} from '#lib/utils/generateR2Url.js';
 import { generateGradientColors } from '#lib/utils/index.js';
 import {
   AnnotationEffect,
@@ -54,7 +60,7 @@ export const buildSceneProps = (
   const thumbUrl =
     !isDefaultMap(activeScene.mapLocation) && activeScene.mapLocation
       ? generateLargeImageUrl(activeScene.mapLocation, bucketUrl)
-      : StageDefaultProps.map.url;
+      : toBucketUrl(StageDefaultProps.map.url, bucketUrl);
 
   let markers: Marker[] = [];
   if (activeSceneMarkers && Array.isArray(activeSceneMarkers)) {
@@ -88,7 +94,7 @@ export const buildSceneProps = (
         name: annotation.name,
         opacity: annotation.opacity,
         color: annotation.color,
-        url: annotation.url ? `https://files.tableslayer.com/${annotation.url}` : null,
+        url: annotation.url ? `${bucketUrl ?? LEGACY_BUCKET_URL}/${annotation.url}` : null,
         // DB rows carry base64; doc snapshots carry stable Uint8Array references
         mask: typeof annotation.mask === 'string' ? base64ToUint8(annotation.mask) : (annotation.mask ?? null),
         visibility: annotation.visibility as StageMode,
@@ -144,7 +150,7 @@ export const buildSceneProps = (
     },
     edgeOverlay: {
       enabled: activeScene.edgeEnabled ?? false,
-      url: activeScene.edgeUrl ?? '',
+      url: toBucketUrl(activeScene.edgeUrl ?? '', bucketUrl),
       opacity: activeScene.edgeOpacity ?? 1,
       scale: activeScene.edgeScale ?? 1,
       fadeStart: activeScene.edgeFadeStart ?? 0,
@@ -288,7 +294,7 @@ export const buildSceneProps = (
       },
       lut: {
         enabled: true,
-        url: activeScene.effectsLutUrl
+        url: toBucketUrl(activeScene.effectsLutUrl, bucketUrl)
       },
       toneMapping: {
         enabled: true,

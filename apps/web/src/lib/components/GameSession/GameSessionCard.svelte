@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from '$app/state';
+  import { LEGACY_BUCKET_URL } from '#lib/utils/generateR2Url.js';
   import {
     Spacer,
     Button,
@@ -36,13 +38,15 @@
     isPartyAdmin: boolean;
   } = $props();
 
+  const bucketUrl: string = page.data.bucketUrl ?? LEGACY_BUCKET_URL;
+
   let gameSessionName = $state(session.name);
   let renameGameSessionErrors = $state<FormMutationError | undefined>(undefined);
   let formIsLoading = $state(false);
   let exportIsLoading = $state(false);
 
   const images: string[] = [];
-  const emptyImage = 'https://files.tableslayer.com/illustrations/party/empty.png';
+  const emptyImage = `${bucketUrl}/illustrations/party/empty.png`;
 
   for (const scene of session.scenes) {
     if (scene.thumb) {

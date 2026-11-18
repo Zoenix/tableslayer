@@ -5,6 +5,7 @@
   import { buildSceneProps, throttle } from '#lib/utils/index.js';
   import { transformCursorsToArray } from '#lib/utils/cursors.js';
   import { StageDefaultProps } from '#lib/utils/defaultMapState.js';
+  import { toBucketUrl } from '#lib/utils/generateR2Url.js';
   import { createMultiFingerPan, createUnifiedGestureDetector } from '#lib/utils/gestureDetection.js';
   import { extractMeasurementProps, getLatestMeasurement } from '#lib/utils/measurements.js';
   import { createConditionalActivityTimer } from '#lib/utils/activityTimer.js';
@@ -147,7 +148,19 @@
   const fallbackProps: StageProps = untrack(() => {
     const props = data.activeScene
       ? buildSceneProps(data.activeScene, [], 'client', [], [], data.bucketUrl)
-      : { ...StageDefaultProps, mode: StageMode.Player, activeLayer: MapLayerType.None };
+      : {
+          ...StageDefaultProps,
+          mode: StageMode.Player,
+          activeLayer: MapLayerType.None,
+          map: { ...StageDefaultProps.map, url: toBucketUrl(StageDefaultProps.map.url, data.bucketUrl) },
+          postProcessing: {
+            ...StageDefaultProps.postProcessing,
+            lut: {
+              ...StageDefaultProps.postProcessing.lut,
+              url: toBucketUrl(StageDefaultProps.postProcessing.lut.url, data.bucketUrl)
+            }
+          }
+        };
     props.measurement.diagonalRule = data.party.diagonalRule;
     return props;
   });

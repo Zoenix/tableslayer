@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from '$app/state';
+  import { LEGACY_BUCKET_URL, toBucketUrl } from '#lib/utils/generateR2Url.js';
   import { type ZodIssue } from 'zod';
   import { FormControl, Select, Spacer, InputSlider, Text, Hr, RadioButton } from '@tableslayer/ui';
   import { type StageProps } from '@tableslayer/stage';
@@ -18,30 +20,32 @@
     party: SelectParty & Thumb;
   } = $props();
 
+  const bucketUrl: string = page.data.bucketUrl ?? LEGACY_BUCKET_URL;
+
   // LUTs licensed under CC BY-SA 4.0
   // https://gmic.eu/color_presets/
   const lutOptions = [
     { label: 'None', value: 'none' },
-    { label: 'Bleach bypass', value: 'https://files.tableslayer.com/stage/luts/bleachbypass2.cube' },
-    { label: 'Candlelight', value: 'https://files.tableslayer.com/stage/luts/candlelight.cube' },
-    { label: 'Color negative', value: 'https://files.tableslayer.com/stage/luts/colornegative.cube' },
-    { label: 'Cool', value: 'https://files.tableslayer.com/stage/luts/Cool.cube' },
-    { label: 'Crisp warm', value: 'https://files.tableslayer.com/stage/luts/crispwarm.cube' },
-    { label: 'Crisp winter', value: 'https://files.tableslayer.com/stage/luts/crispwinter.cube' },
-    { label: 'Drop blues', value: 'https://files.tableslayer.com/stage/luts/dropblues.cube' },
-    { label: 'Edgey ember', value: 'https://files.tableslayer.com/stage/luts/edgyember.cube' },
-    { label: 'Fall colors', value: 'https://files.tableslayer.com/stage/luts/fallcolors.cube' },
-    { label: 'Foggy night', value: 'https://files.tableslayer.com/stage/luts/foggynight.cube' },
-    { label: 'Futuristic bleak', value: 'https://files.tableslayer.com/stage/luts/futuristicbleak2.cube' },
-    { label: 'Grayscale', value: 'https://files.tableslayer.com/stage/luts/Grayscale.cube' },
-    { label: 'Horror blue', value: 'https://files.tableslayer.com/stage/luts/horrorblue.cube' },
-    { label: 'Late sunset', value: 'https://files.tableslayer.com/stage/luts/latesunset.cube' },
-    { label: 'Moonlight', value: 'https://files.tableslayer.com/stage/luts/moonlight.cube' },
-    { label: 'Night from day', value: 'https://files.tableslayer.com/stage/luts/nightfromday.cube' },
-    { label: 'Smokey', value: 'https://files.tableslayer.com/stage/luts/smokey.cube' },
-    { label: 'Spooky', value: 'https://files.tableslayer.com/stage/luts/Spooky.cube' },
-    { label: 'Virbrant', value: 'https://files.tableslayer.com/stage/luts/Vibrant.cube' },
-    { label: 'Warm', value: 'https://files.tableslayer.com/stage/luts/Warm.cube' }
+    { label: 'Bleach bypass', value: `${bucketUrl}/stage/luts/bleachbypass2.cube` },
+    { label: 'Candlelight', value: `${bucketUrl}/stage/luts/candlelight.cube` },
+    { label: 'Color negative', value: `${bucketUrl}/stage/luts/colornegative.cube` },
+    { label: 'Cool', value: `${bucketUrl}/stage/luts/Cool.cube` },
+    { label: 'Crisp warm', value: `${bucketUrl}/stage/luts/crispwarm.cube` },
+    { label: 'Crisp winter', value: `${bucketUrl}/stage/luts/crispwinter.cube` },
+    { label: 'Drop blues', value: `${bucketUrl}/stage/luts/dropblues.cube` },
+    { label: 'Edgey ember', value: `${bucketUrl}/stage/luts/edgyember.cube` },
+    { label: 'Fall colors', value: `${bucketUrl}/stage/luts/fallcolors.cube` },
+    { label: 'Foggy night', value: `${bucketUrl}/stage/luts/foggynight.cube` },
+    { label: 'Futuristic bleak', value: `${bucketUrl}/stage/luts/futuristicbleak2.cube` },
+    { label: 'Grayscale', value: `${bucketUrl}/stage/luts/Grayscale.cube` },
+    { label: 'Horror blue', value: `${bucketUrl}/stage/luts/horrorblue.cube` },
+    { label: 'Late sunset', value: `${bucketUrl}/stage/luts/latesunset.cube` },
+    { label: 'Moonlight', value: `${bucketUrl}/stage/luts/moonlight.cube` },
+    { label: 'Night from day', value: `${bucketUrl}/stage/luts/nightfromday.cube` },
+    { label: 'Smokey', value: `${bucketUrl}/stage/luts/smokey.cube` },
+    { label: 'Spooky', value: `${bucketUrl}/stage/luts/Spooky.cube` },
+    { label: 'Virbrant', value: `${bucketUrl}/stage/luts/Vibrant.cube` },
+    { label: 'Warm', value: `${bucketUrl}/stage/luts/Warm.cube` }
   ];
 
   const toneMappingOptions = [
@@ -55,7 +59,9 @@
     { label: 'Uncharted', mode: ToneMappingMode.UNCHARTED2, value: 'UNCHARTED2' }
   ];
 
-  let selectedLut = $state(stageProps.postProcessing.lut.url !== null ? stageProps.postProcessing.lut.url : 'none');
+  let selectedLut = $state(
+    stageProps.postProcessing.lut.url !== null ? toBucketUrl(stageProps.postProcessing.lut.url, bucketUrl) : 'none'
+  );
   let selectedToneMapping = $state(
     toneMappingOptions.find((option) => option.mode === stageProps.postProcessing.toneMapping.mode)?.value ||
       toneMappingOptions[0].value

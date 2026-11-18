@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { page } from '$app/state';
+  import { LEGACY_BUCKET_URL } from '#lib/utils/generateR2Url.js';
   import {
     RadioButton,
     Icon,
@@ -68,6 +70,8 @@
     onPinToggle?: (markerId: string, pinned: boolean) => void;
   } = $props();
 
+  const bucketUrl: string = page.data.bucketUrl ?? LEGACY_BUCKET_URL;
+
   const uploadFile = useUploadFileMutation();
 
   let activeMarkerId = $state<string | null>(null);
@@ -127,7 +131,7 @@
       return;
     }
 
-    const newFileUrl = `https://files.tableslayer.com/cdn-cgi/image/w=512,h=512,fit=cover,gravity=auto/${uploadedFile.location}`;
+    const newFileUrl = `${bucketUrl}/cdn-cgi/image/w=512,h=512,fit=cover,gravity=auto/${uploadedFile.location}`;
     updateMarkerAndSave(markerId, (marker) => {
       marker.imageUrl = newFileUrl;
     });
