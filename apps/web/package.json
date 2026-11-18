@@ -12,6 +12,8 @@
     "deploy:party": "wrangler deploy --config partyserver/wrangler.jsonc",
     "preview": "vite preview",
     "start": "node build",
+    "start:selfhost": "node selfhost/server.js",
+    "realtime:selfhost": "sh selfhost/realtime.sh",
     "tsc": "svelte-kit sync && tsc",
     "test": "pnpm run test:unit && pnpm run test:integration",
     "test:xvfb": "pnpm run test:unit && pnpm run test:integration:headed",
@@ -30,6 +32,7 @@
     "studio": "drizzle-kit studio --config ./src/lib/db/app/drizzle.config.app.ts",
     "assets:generate": "node scripts/assets-generate.js",
     "assets:upload": "node scripts/assets-upload.js",
+    "assets:download": "node scripts/assets-download.js",
     "postinstall": "svelte-kit sync"
   },
   "dependencies": {
