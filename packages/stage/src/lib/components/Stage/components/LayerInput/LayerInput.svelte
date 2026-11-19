@@ -112,6 +112,8 @@
 
   // Internal event handler methods for mouse
   function handleMouseDown(event: MouseEvent) {
+    // Middle button is reserved for panning the scene
+    if (event.button === 1) return;
     if (onMouseDown && isActive) {
       onMouseDown(event, mouseToCanvasCoords(event));
     }

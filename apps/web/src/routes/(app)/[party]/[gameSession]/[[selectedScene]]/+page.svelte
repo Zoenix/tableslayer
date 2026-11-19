@@ -1225,12 +1225,15 @@
     const relativeY = cursorY - verticalMargin;
     isCursorInScene = relativeX >= 0 && relativeX <= rotatedWidth && relativeY >= 0 && relativeY <= rotatedHeight;
 
-    if (e.buttons === 1 || e.buttons === 2) {
+    const isMiddleButtonPan = e.buttons === 4;
+    if (e.buttons === 1 || e.buttons === 2 || isMiddleButtonPan) {
       const radians = (Math.PI / 180) * rotation;
       const rotatedMovementX = e.movementX * Math.cos(radians) + e.movementY * Math.sin(radians);
       const rotatedMovementY = -e.movementX * Math.sin(radians) + e.movementY * Math.cos(radians);
 
-      if (e.shiftKey) {
+      if (isMiddleButtonPan) {
+        onScenePan(rotatedMovementX, -rotatedMovementY);
+      } else if (e.shiftKey) {
         const movementFactor = 1 / stageProps.scene.zoom;
         queuePropertyUpdate(
           stageProps,
@@ -1413,6 +1416,10 @@
 
     if (stageElement) {
       stageElement.addEventListener('mousemove', onMouseMove);
+      // Middle-button drag pans the scene; block the browser's autoscroll
+      stageElement.addEventListener('mousedown', (e) => {
+        if (e.button === 1) e.preventDefault();
+      });
       stageElement.addEventListener('mouseleave', () => {
         isCursorInScene = false;
       });
